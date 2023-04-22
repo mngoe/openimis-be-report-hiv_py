@@ -174,6 +174,7 @@ def invoice_hiv_query(user, **kwargs):
     dictGeo = {}
     dictBase = {}
     total = 0
+    element_ids = []
     dictBase["periode"] = str(date_from_str) + " - " + date_to_str
     dictBase["dateFacturation"] = maintenant
     # If there is HealthFacility defined in the form
@@ -223,24 +224,26 @@ def invoice_hiv_query(user, **kwargs):
             status=1
         )
         for claimServiceElmt in claimService:
-            qty_approved = claimServiceElmt.qty_approved and claimServiceElmt.qty_approved or 0
-            qty_provided = 0
-            if cclaim.status==16:
-                # Valuated
-                qty_provided = claimServiceElmt.qty_provided and claimServiceElmt.qty_provided or 0
-            pu = claimServiceElmt.service.price and claimServiceElmt.service.price or 0
-            sous_total = pu * qty_provided
-            total += sous_total
-            val = {
-                "Numero": str(count),
-                "Nom": claimServiceElmt.service.name,
-                "QteDeclaree": str("{:,.0f}".format(float(qty_approved))),
-                "QteValidee": str("{:,.0f}".format(float(qty_provided))),
-                "PrixUnit": str("{:,.0f}".format(float(pu))),      
-                "Montant": str("{:,.0f}".format(float(int(sous_total))))
-            }
-            data.append(val)
-            count +=1
+            if claimServiceElmt.service.id not in element_ids:
+                element_ids.append(claimServiceElmt.service.id)
+                qty_approved = claimServiceElmt.qty_approved and claimServiceElmt.qty_approved or 0
+                qty_provided = 0
+                if cclaim.status==16:
+                    # Valuated
+                    qty_provided = claimServiceElmt.qty_provided and claimServiceElmt.qty_provided or 0
+                pu = claimServiceElmt.service.price and claimServiceElmt.service.price or 0
+                sous_total = pu * qty_provided
+                total += sous_total
+                val = {
+                    "Numero": str(count),
+                    "Nom": claimServiceElmt.service.name,
+                    "QteDeclaree": str("{:,.0f}".format(float(qty_approved))),
+                    "QteValidee": str("{:,.0f}".format(float(qty_provided))),
+                    "PrixUnit": str("{:,.0f}".format(float(pu))),      
+                    "Montant": str("{:,.0f}".format(float(int(sous_total))))
+                }
+                data.append(val)
+                count +=1
 
 
         # claimItem
@@ -249,24 +252,26 @@ def invoice_hiv_query(user, **kwargs):
             status=1
         )
         for claimItemElmt in claimItems:
-            qty_approved = claimItemElmt.qty_approved and claimItemElmt.qty_approved or 0
-            qty_provided = 0
-            if cclaim.status==16:
-                # Valuated
-                qty_provided = claimItemElmt.qty_provided and claimItemElmt.qty_provided or 0
-            pu = claimItemElmt.item.price and claimItemElmt.item.price or 0
-            sous_total2 = pu * qty_provided
-            total += sous_total2
-            val = {
-                "Numero": str(count),
-                "Nom": claimItemElmt.item.name,
-                "QteDeclaree": str("{:,.0f}".format(float(qty_approved))),
-                "QteValidee": str("{:,.0f}".format(float(qty_provided))),
-                "PrixUnit": str("{:,.0f}".format(float(pu))),   
-                "Montant": str("{:,.0f}".format(float(int(sous_total2))))
-            }
-            data.append(val)
-            count +=1
+            if claimItemElmt.item.id not in element_ids:
+                element_ids.append(claimItemElmt.item.id)
+                qty_approved = claimItemElmt.qty_approved and claimItemElmt.qty_approved or 0
+                qty_provided = 0
+                if cclaim.status==16:
+                    # Valuated
+                    qty_provided = claimItemElmt.qty_provided and claimItemElmt.qty_provided or 0
+                pu = claimItemElmt.item.price and claimItemElmt.item.price or 0
+                sous_total2 = pu * qty_provided
+                total += sous_total2
+                val = {
+                    "Numero": str(count),
+                    "Nom": claimItemElmt.item.name,
+                    "QteDeclaree": str("{:,.0f}".format(float(qty_approved))),
+                    "QteValidee": str("{:,.0f}".format(float(qty_provided))),
+                    "PrixUnit": str("{:,.0f}".format(float(pu))),   
+                    "Montant": str("{:,.0f}".format(float(int(sous_total2))))
+                }
+                data.append(val)
+                count +=1
     dictBase["datas"] = data
     dictBase["TOTAL"] = str("{:,.0f}".format(float(int(total)))) + " Francs CFA"
     dictBase["amountLetter"] = amount_to_text_fr(int(total), 'Francs CFA')
