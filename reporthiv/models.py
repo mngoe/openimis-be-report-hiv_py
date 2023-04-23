@@ -1,6 +1,4 @@
-# from medical.models import Item, Service
 from report.services import run_stored_proc_report
-# from claim.models import Claim, ClaimService, ClaimItem, ClaimServiceService, ClaimServiceItem
 from claim.models import ClaimService, Claim, ClaimItem
 from location.models import Location, HealthFacility
 import datetime
@@ -157,9 +155,6 @@ def amount_to_text_fr(number, currency):
 def invoice_hiv_query(user, **kwargs):
     date_from = kwargs.get("date_from")
     date_to = kwargs.get("date_to")
-    location0 = kwargs.get("location0")
-    location1 = kwargs.get("location1")
-    location2 = kwargs.get("location2")
     hflocation = kwargs.get("hflocation")
     
     format = "%Y-%m-%d"
@@ -183,30 +178,45 @@ def invoice_hiv_query(user, **kwargs):
             code=hflocation,
             validity_to__isnull=True
             ).first()
-        print("region ", hflocationObj.location.name)
         dictBase["fosa"] = hflocationObj.name
         dictBase["Phone"] = hflocationObj.phone
         dictGeo['health_facility'] = hflocationObj.id
-    if location0:
-        location0_str = Location.objects.filter(
-            code=location0,
-            validity_to__isnull=True
-            ).first().name
-        dictBase["region"] = location0_str
-
-    if location1:
-        location1_str = Location.objects.filter(
-            code=location1,
-            validity_to__isnull=True
-            ).first().name
-        dictBase["district"] = location1_str
+        level_village = False
+        level_district = False
+        level_ville = False
+        municipality = " "
+        district = " "
+        village = " "
+        if hflocationObj.location.parent:
+            level_district = True
+            if hflocationObj.location.parent.parent:
+                level_ville = True
+                if hflocationObj.location.parent.parent.parent:
+                    level_village = True
+        if level_village:
+            village = hflocationObj.location.name
+            municipality = hflocationObj.location.parent.name
+            district = hflocationObj.location.parent.parent.name
+            region = hflocationObj.location.parent.parent.parent.name
+        elif level_ville:
+            municipality = hflocationObj.location.name
+            district = hflocationObj.location.parent.name
+            region = hflocationObj.location.parent.parent.name
+        elif level_district:
+            district = hflocationObj.location.name
+            region = hflocationObj.location.parent.name
+        else:
+            region = hflocationObj.location.name
+        print("region ", region)
+        print("district ", district)
+        print("municipality ", municipality)
+        print("village ", village)
     
-    if location2:
-        location2_str = Location.objects.filter(
-            code=location2,
-            validity_to__isnull=True
-            ).first().name
-        dictBase["area"] = location2_str
+        dictBase["region"] = region
+        dictBase["district"] = district
+        dictBase["area"] = municipality
+        dictBase["village"] = village
+
     claimList = Claim.objects.exclude(
         status=1
     ).filter(
