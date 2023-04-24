@@ -172,6 +172,12 @@ def invoice_hiv_query(user, **kwargs):
     element_ids = []
     dictBase["periode"] = str(date_from_str) + " - " + date_to_str
     dictBase["dateFacturation"] = maintenant
+    dictBase["texte1"] = "Rapporté à ___________ le ..../..../20__"
+    dictBase["texte2"] = "Vérifié à ________ le ..../..../20__"
+    dictBase["texte3"] = "Validé le ______________________"
+    dictBase["valeur1"] = "Responsable de l'établissement de santé (HHF)\n\n\n\n\n\n\n\n\n\n\n\n"
+    dictBase["valeur2"] = "Auditeur CVA Responsable HF"
+    dictBase["valeur3"] = "Comité de Validation"
     # If there is HealthFacility defined in the form
     if hflocation and hflocation!="0" :
         hflocationObj = HealthFacility.objects.filter(
